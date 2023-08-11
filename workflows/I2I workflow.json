@@ -1,0 +1,1555 @@
+{
+  "last_node_id": 343,
+  "last_link_id": 59216,
+  "nodes": [
+    {
+      "id": 108,
+      "type": "CLIPTextEncodeSDXLRefiner",
+      "pos": [
+        -3270,
+        1300
+      ],
+      "size": {
+        "0": 344.3999938964844,
+        "1": 126
+      },
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 59044
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 59046,
+          "widget": {
+            "name": "text",
+            "config": [
+              "STRING",
+              {
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            59047
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "CLIPTextEncodeSDXLRefiner Negative Prompt",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncodeSDXLRefiner"
+      },
+      "widgets_values": [
+        2.5,
+        1024,
+        1024,
+        "terrible quality, bad anatomy, crossed eyes"
+      ]
+    },
+    {
+      "id": 107,
+      "type": "CLIPTextEncodeSDXLRefiner",
+      "pos": [
+        -3270,
+        1130
+      ],
+      "size": {
+        "0": 344.3999938964844,
+        "1": 126
+      },
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 59041
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 59042,
+          "widget": {
+            "name": "text",
+            "config": [
+              "STRING",
+              {
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            59043
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "CLIPTextEncodeSDXLRefiner Positive Prompt",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncodeSDXLRefiner"
+      },
+      "widgets_values": [
+        6,
+        1024,
+        1024,
+        "a highly detailed 1700's painting of a colonial person, highly detailed face, highly detailed eyes, best quality, masterpiece"
+      ]
+    },
+    {
+      "id": 44,
+      "type": "VAELoader",
+      "pos": [
+        -3270,
+        1470
+      ],
+      "size": {
+        "0": 346.82275390625,
+        "1": 58
+      },
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            59033,
+            59034
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAELoader"
+      },
+      "widgets_values": [
+        "sdxl_vae.safetensors"
+      ]
+    },
+    {
+      "id": 18,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        -3690,
+        930
+      ],
+      "size": {
+        "0": 317.6700134277344,
+        "1": 98
+      },
+      "flags": {
+        "collapsed": false
+      },
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            59030
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            59041,
+            59044
+          ],
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [],
+          "slot_index": 2
+        }
+      ],
+      "title": "Load Refiner",
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "sd_xl_refiner_1.0.safetensors"
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 4,
+      "type": "CheckpointLoaderSimple",
+      "pos": [
+        -3690,
+        790
+      ],
+      "size": {
+        "0": 314.88055419921875,
+        "1": 98
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            59027
+          ],
+          "slot_index": 0
+        },
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            59035,
+            59038
+          ],
+          "slot_index": 1
+        },
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [],
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CheckpointLoaderSimple"
+      },
+      "widgets_values": [
+        "sd_xl_base_1.0.safetensors"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 34,
+      "type": "PrimitiveNode",
+      "pos": [
+        -3560,
+        1430
+      ],
+      "size": {
+        "0": 210,
+        "1": 82
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "FLOAT",
+          "type": "FLOAT",
+          "links": [
+            41410,
+            41419
+          ],
+          "slot_index": 0,
+          "widget": {
+            "name": "cfg",
+            "config": [
+              "FLOAT",
+              {
+                "default": 8,
+                "min": 0,
+                "max": 100
+              }
+            ]
+          }
+        }
+      ],
+      "title": "CFG",
+      "properties": {},
+      "widgets_values": [
+        7,
+        "fixed"
+      ]
+    },
+    {
+      "id": 72,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -3280,
+        1030
+      ],
+      "size": {
+        "0": 344.9279479980469,
+        "1": 54
+      },
+      "flags": {
+        "collapsed": false
+      },
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 59038
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 59039,
+          "widget": {
+            "name": "text",
+            "config": [
+              "STRING",
+              {
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            59040
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "CLIP Text Encode (Negative Prompt)",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "terrible quality, bad anatomy, crossed eyes"
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 24,
+      "type": "PrimitiveNode",
+      "pos": [
+        -3800,
+        1430
+      ],
+      "size": {
+        "0": 210,
+        "1": 82
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            41411,
+            41418
+          ],
+          "slot_index": 0,
+          "widget": {
+            "name": "noise_seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Seed",
+      "properties": {},
+      "widgets_values": [
+        1053970276754110,
+        "fixed"
+      ]
+    },
+    {
+      "id": 87,
+      "type": "LoadImage",
+      "pos": [
+        -4210,
+        1810
+      ],
+      "size": {
+        "0": 480.041015625,
+        "1": 644.239501953125
+      },
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            59177,
+            59194,
+            59198,
+            59206
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            59178
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "clipspace/clipspace-mask-3469647.899999976.png [input]",
+        "image"
+      ]
+    },
+    {
+      "id": 333,
+      "type": "Inpaint Segments",
+      "pos": [
+        -3200,
+        1750
+      ],
+      "size": {
+        "0": 393,
+        "1": 314
+      },
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 59206
+        },
+        {
+          "name": "mask",
+          "type": "IMAGE",
+          "link": 59207
+        },
+        {
+          "name": "mask_mapping_optional",
+          "type": "MASK_MAPPING",
+          "link": 59184
+        }
+      ],
+      "outputs": [
+        {
+          "name": "cut image",
+          "type": "IMAGE",
+          "links": [
+            59193,
+            59199
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "cut mask",
+          "type": "IMAGE",
+          "links": [
+            59192
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "region",
+          "type": "IMAGE",
+          "links": [
+            59190
+          ],
+          "shape": 3,
+          "slot_index": 2
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Inpaint Segments"
+      },
+      "widgets_values": [
+        1024,
+        1024,
+        "RGB",
+        3,
+        "keep_ratio",
+        64,
+        64,
+        0,
+        0,
+        "match_ratio"
+      ]
+    },
+    {
+      "id": 332,
+      "type": "Mask Ops",
+      "pos": [
+        -3610,
+        2150
+      ],
+      "size": {
+        "0": 315,
+        "1": 318
+      },
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 59177
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 59178
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask",
+          "type": "IMAGE",
+          "links": [
+            59207
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "mask mapping",
+          "type": "MASK_MAPPING",
+          "links": [
+            59184,
+            59191
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Mask Ops"
+      },
+      "widgets_values": [
+        "face",
+        0,
+        0,
+        0,
+        0,
+        145,
+        255,
+        "red",
+        4,
+        0,
+        3.9444458007812497
+      ]
+    },
+    {
+      "id": 110,
+      "type": "PrimitiveNode",
+      "pos": [
+        -4160,
+        1200
+      ],
+      "size": {
+        "0": 317.7752685546875,
+        "1": 132.7703399658203
+      },
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            59039,
+            59046
+          ],
+          "slot_index": 0,
+          "widget": {
+            "name": "text_2",
+            "config": [
+              "STRING",
+              {
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Negative Prompt",
+      "properties": {},
+      "widgets_values": [
+        "terrible quality, bad anatomy, crossed eyes"
+      ]
+    },
+    {
+      "id": 71,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -3270,
+        940
+      ],
+      "size": {
+        "0": 345.9279479980469,
+        "1": 54
+      },
+      "flags": {
+        "collapsed": false
+      },
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 59035
+        },
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 59036,
+          "widget": {
+            "name": "text",
+            "config": [
+              "STRING",
+              {
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            59037
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "CLIP Text Encode (Positive Prompt)",
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        "a highly detailed 1700's painting of a colonial person, highly detailed face, highly detailed eyes, best quality, masterpiece"
+      ],
+      "color": "#232",
+      "bgcolor": "#353"
+    },
+    {
+      "id": 74,
+      "type": "VAEDecode",
+      "pos": [
+        -1580,
+        2060
+      ],
+      "size": {
+        "0": 210,
+        "1": 46
+      },
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 41412
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 59034
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            59195
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEDecode"
+      }
+    },
+    {
+      "id": 339,
+      "type": "Color Transfer",
+      "pos": [
+        -300,
+        1870
+      ],
+      "size": {
+        "0": 315,
+        "1": 78
+      },
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source_image",
+          "type": "IMAGE",
+          "link": 59209
+        },
+        {
+          "name": "target_image",
+          "type": "IMAGE",
+          "link": 59210
+        }
+      ],
+      "outputs": [
+        {
+          "name": "i",
+          "type": "IMAGE",
+          "links": [
+            59211
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Color Transfer"
+      },
+      "widgets_values": [
+        0.5
+      ]
+    },
+    {
+      "id": 340,
+      "type": "SaveImage",
+      "pos": [
+        230,
+        1870
+      ],
+      "size": [
+        881.9852305151353,
+        1089.0461233630367
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 59211
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 338,
+      "type": "LoadImage",
+      "pos": [
+        -1480,
+        1280
+      ],
+      "size": [
+        653.5256699865715,
+        623.6300641461175
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            59209
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "14387-3274465582-Photo of fusion of a huge savage rabbit monster with an alien in the space, style of laurie greasley, studio ghibli, akira toriy.png",
+        "image"
+      ]
+    },
+    {
+      "id": 109,
+      "type": "PrimitiveNode",
+      "pos": [
+        -4170,
+        1000
+      ],
+      "size": {
+        "0": 319.213134765625,
+        "1": 126.30355072021484
+      },
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            59036,
+            59042
+          ],
+          "slot_index": 0,
+          "widget": {
+            "name": "text",
+            "config": [
+              "STRING",
+              {
+                "multiline": true
+              }
+            ]
+          }
+        }
+      ],
+      "title": "Positive Prompt",
+      "properties": {},
+      "widgets_values": [
+        "a highly detailed 1700's painting of a colonial person, highly detailed face, highly detailed eyes, best quality, masterpiece"
+      ]
+    },
+    {
+      "id": 335,
+      "type": "PreviewImage",
+      "pos": [
+        -4780,
+        1830
+      ],
+      "size": {
+        "0": 533.1870727539062,
+        "1": 548.014404296875
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 59198
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 105,
+      "type": "VAEEncode",
+      "pos": [
+        -2714,
+        1676
+      ],
+      "size": {
+        "0": 210,
+        "1": 46
+      },
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 59199
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 59033
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            59208
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "VAEEncode"
+      }
+    },
+    {
+      "id": 130,
+      "type": "KSampler",
+      "pos": [
+        -2392,
+        1160
+      ],
+      "size": {
+        "0": 315,
+        "1": 262
+      },
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 59027
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 59037
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 59040
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 59208
+        },
+        {
+          "name": "seed",
+          "type": "INT",
+          "link": 41418,
+          "widget": {
+            "name": "seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "link": 41419,
+          "widget": {
+            "name": "cfg",
+            "config": [
+              "FLOAT",
+              {
+                "default": 8,
+                "min": 0,
+                "max": 100
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            41406
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Checkpoint KSampler",
+      "properties": {
+        "Node name for S&R": "KSampler"
+      },
+      "widgets_values": [
+        1053970276754110,
+        "fixed",
+        7,
+        7,
+        "dpmpp_sde_gpu",
+        "simple",
+        0.55
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 111,
+      "type": "KSamplerAdvanced",
+      "pos": [
+        -2010,
+        1463
+      ],
+      "size": {
+        "0": 315,
+        "1": 334
+      },
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 59030
+        },
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "link": 59043
+        },
+        {
+          "name": "negative",
+          "type": "CONDITIONING",
+          "link": 59047
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 41406
+        },
+        {
+          "name": "cfg",
+          "type": "FLOAT",
+          "link": 41410,
+          "widget": {
+            "name": "cfg",
+            "config": [
+              "FLOAT",
+              {
+                "default": 8,
+                "min": 0,
+                "max": 100
+              }
+            ]
+          }
+        },
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "link": 41411,
+          "widget": {
+            "name": "noise_seed",
+            "config": [
+              "INT",
+              {
+                "default": 0,
+                "min": 0,
+                "max": 18446744073709552000
+              }
+            ]
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LATENT",
+          "type": "LATENT",
+          "links": [
+            41412
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "title": "Refiner KSampler (Advanced)",
+      "properties": {
+        "Node name for S&R": "KSamplerAdvanced"
+      },
+      "widgets_values": [
+        "enable",
+        26169760911060,
+        "randomize",
+        10,
+        7,
+        "dpmpp_sde_gpu",
+        "simple",
+        7,
+        10,
+        "enable"
+      ],
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
+      "id": 334,
+      "type": "Combine and Paste",
+      "pos": [
+        -1240,
+        2330
+      ],
+      "size": {
+        "0": 380.4000244140625,
+        "1": 254
+      },
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "decoded_vae",
+          "type": "IMAGE",
+          "link": 59195
+        },
+        {
+          "name": "Original_Image",
+          "type": "IMAGE",
+          "link": 59194
+        },
+        {
+          "name": "Cut_Image",
+          "type": "IMAGE",
+          "link": 59193
+        },
+        {
+          "name": "Cut_Mask",
+          "type": "IMAGE",
+          "link": 59192
+        },
+        {
+          "name": "region",
+          "type": "IMAGE",
+          "link": 59190
+        },
+        {
+          "name": "mask_mapping_optional",
+          "type": "MASK_MAPPING",
+          "link": 59191
+        }
+      ],
+      "outputs": [
+        {
+          "name": "FinalOut",
+          "type": "IMAGE",
+          "links": [
+            59196,
+            59210
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Combine and Paste"
+      },
+      "widgets_values": [
+        1,
+        "multiply_alpha",
+        "yes",
+        "no",
+        "resize"
+      ]
+    },
+    {
+      "id": 75,
+      "type": "SaveImage",
+      "pos": [
+        -754,
+        2625
+      ],
+      "size": [
+        787.3301374877929,
+        1004.6297954711918
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 59196
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    }
+  ],
+  "links": [
+    [
+      41406,
+      130,
+      0,
+      111,
+      3,
+      "LATENT"
+    ],
+    [
+      41410,
+      34,
+      0,
+      111,
+      4,
+      "FLOAT"
+    ],
+    [
+      41411,
+      24,
+      0,
+      111,
+      5,
+      "INT"
+    ],
+    [
+      41412,
+      111,
+      0,
+      74,
+      0,
+      "LATENT"
+    ],
+    [
+      41418,
+      24,
+      0,
+      130,
+      4,
+      "INT"
+    ],
+    [
+      41419,
+      34,
+      0,
+      130,
+      5,
+      "FLOAT"
+    ],
+    [
+      59027,
+      4,
+      0,
+      130,
+      0,
+      "MODEL"
+    ],
+    [
+      59030,
+      18,
+      0,
+      111,
+      0,
+      "MODEL"
+    ],
+    [
+      59033,
+      44,
+      0,
+      105,
+      1,
+      "VAE"
+    ],
+    [
+      59034,
+      44,
+      0,
+      74,
+      1,
+      "VAE"
+    ],
+    [
+      59035,
+      4,
+      1,
+      71,
+      0,
+      "CLIP"
+    ],
+    [
+      59036,
+      109,
+      0,
+      71,
+      1,
+      "STRING"
+    ],
+    [
+      59037,
+      71,
+      0,
+      130,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      59038,
+      4,
+      1,
+      72,
+      0,
+      "CLIP"
+    ],
+    [
+      59039,
+      110,
+      0,
+      72,
+      1,
+      "STRING"
+    ],
+    [
+      59040,
+      72,
+      0,
+      130,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      59041,
+      18,
+      1,
+      107,
+      0,
+      "CLIP"
+    ],
+    [
+      59042,
+      109,
+      0,
+      107,
+      1,
+      "STRING"
+    ],
+    [
+      59043,
+      107,
+      0,
+      111,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      59044,
+      18,
+      1,
+      108,
+      0,
+      "CLIP"
+    ],
+    [
+      59046,
+      110,
+      0,
+      108,
+      1,
+      "STRING"
+    ],
+    [
+      59047,
+      108,
+      0,
+      111,
+      2,
+      "CONDITIONING"
+    ],
+    [
+      59177,
+      87,
+      0,
+      332,
+      0,
+      "IMAGE"
+    ],
+    [
+      59178,
+      87,
+      1,
+      332,
+      1,
+      "MASK"
+    ],
+    [
+      59184,
+      332,
+      1,
+      333,
+      2,
+      "MASK_MAPPING"
+    ],
+    [
+      59190,
+      333,
+      2,
+      334,
+      4,
+      "IMAGE"
+    ],
+    [
+      59191,
+      332,
+      1,
+      334,
+      5,
+      "MASK_MAPPING"
+    ],
+    [
+      59192,
+      333,
+      1,
+      334,
+      3,
+      "IMAGE"
+    ],
+    [
+      59193,
+      333,
+      0,
+      334,
+      2,
+      "IMAGE"
+    ],
+    [
+      59194,
+      87,
+      0,
+      334,
+      1,
+      "IMAGE"
+    ],
+    [
+      59195,
+      74,
+      0,
+      334,
+      0,
+      "IMAGE"
+    ],
+    [
+      59196,
+      334,
+      0,
+      75,
+      0,
+      "IMAGE"
+    ],
+    [
+      59198,
+      87,
+      0,
+      335,
+      0,
+      "IMAGE"
+    ],
+    [
+      59199,
+      333,
+      0,
+      105,
+      0,
+      "IMAGE"
+    ],
+    [
+      59206,
+      87,
+      0,
+      333,
+      0,
+      "IMAGE"
+    ],
+    [
+      59207,
+      332,
+      0,
+      333,
+      1,
+      "IMAGE"
+    ],
+    [
+      59208,
+      105,
+      0,
+      130,
+      3,
+      "LATENT"
+    ],
+    [
+      59209,
+      338,
+      0,
+      339,
+      0,
+      "IMAGE"
+    ],
+    [
+      59210,
+      334,
+      0,
+      339,
+      1,
+      "IMAGE"
+    ],
+    [
+      59211,
+      339,
+      0,
+      340,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
