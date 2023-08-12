@@ -7,7 +7,7 @@
 ## Installation
   If you're running on Linux, or non-admin account on windows you'll want to ensure /ComfyUI/custom_nodes, ComfyUI_I2I, and ComfyI2I.py has write permissions.
   
-  There is now a install.bat you can run to install to portable if detected. Otherwise it will default to system and assume you followed ConfyUI's manual installation steps.
+  There is an install.bat you can run to install to portable if detected. Otherwise it will default to system and assume you followed ComfyUI's manual installation steps.
   
   Navigate to your /ComfyUI/custom_nodes/ folder
   Run git clone https://github.com/ManglerFTW/ComfyI2I/
@@ -15,7 +15,6 @@
   Run pip install -r requirements.txt
   Start ComfyUI
   Tools will be located in the I2I menu.
-
 
 ## Features:
 
@@ -43,7 +42,7 @@ You can adjust this parameter to blend your solid mask with a black and white im
 #### Black Level, Mid Level, White Level:
 Adjust these settings to change the levels of your mask.
 
-<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Blend_Contrast.JPG?raw=true" width="600" alt="Blend Percentage">
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Blend_Contrast.JPG?raw=true" width="600" alt="Levels">
 
 #### Channel:
 Affect the red, green, or blue channel of the underlying image.
@@ -51,32 +50,35 @@ Affect the red, green, or blue channel of the underlying image.
 #### Shrink_Grow:
 Shrink or grow your mask using these settings.
 
-<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ShrinkGrow.JPG?raw=true" width="600" alt="Blend Percentage">
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ShrinkGrow.JPG?raw=true" width="600" alt="Shrink_Grow">
 
 #### Invert:
 Invert your mask.
 
-<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Invert.JPG?raw=true" width="600" alt="Blend Percentage">
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Invert.JPG?raw=true" width="600" alt="Invert">
 
 #### Blur_Radius:
 Blur your mask.
 
-<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Blur.JPG?raw=true" width="600" alt="Blend Percentage">
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Blur.JPG?raw=true" width="600" alt="Blur_Radius">
 
 ### Inpaint Segments Node
 This node essentially will segment and crop your mask and your image based on the mapped bounding boxes of each mask and then upscale them to 1024x1024, or a custom size of your choice. The images then go to a VAE Encode node to be processed.
 
- <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Inpaint_Segments.JPG?raw=true" width="600" alt="Blend Percentage">
+ <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Inpaint_Segments.JPG?raw=true" width="600" alt="Inpaint Segments">
 
 ### Combine and Paste Node
 The combine and paste node will take the new images from the VAE Decode node, resize them to the bounding boxes of your mask and paste them over the original image. Use color_xfer_factor to adjust the effects of the color transfer.
 
- <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Combine_and_Paste.JPG?raw=true" width="600" alt="Blend Percentage">
+ <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Combine_and_Paste.JPG?raw=true" width="600" alt="Combine and Paste">
 
  ### Color Transfer Node
-This is a standalone node that can take the colors of a 
+This is a standalone node that can take the colors of one image and transfer them to another. This function is built into the Combine and Paste node, but I decided to add it in as a standalone as well.
 
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Color_Transfer.JPG?raw=true" width="600" alt="Color Transfer">
 
+ ### Workflow
+ A Basic workflow with all of the nodes combined has been included in the workflows directory under I2I worflow.json. Use this as a reference to see how they are all connected.
 
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Workflow.JPG?raw=true" width="600" alt="Workflow">
 
-<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Blend_Contrast.JPG?raw=true" width="600" alt="Description of my image">
