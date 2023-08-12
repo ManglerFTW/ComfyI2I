@@ -78,7 +78,7 @@ This is a standalone node that can take the colors of one image and transfer the
 <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Color_Transfer.JPG?raw=true" width="600" alt="Color Transfer">
 
  ### Workflow
- A Basic workflow with all of the nodes combined has been included in the workflows directory under I2I worflow.json. Use this as a reference to see how they are all connected.
+ A Basic workflow with all of the nodes combined has been included in the workflows directory under I2I workflow.json. Use this as a reference to see how they are all connected.
 
 <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Workflow.jpg?raw=true" width="600" alt="Workflow">
 
