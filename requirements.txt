@@ -1,12 +1,7 @@
 numpy
-operator
 torch
-sys
-op
-folder_paths
 torchvision
 tensorflor
-PIL
 subprocess
 math
 skimage
