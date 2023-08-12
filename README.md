@@ -80,5 +80,5 @@ This is a standalone node that can take the colors of one image and transfer the
  ### Workflow
  A Basic workflow with all of the nodes combined has been included in the workflows directory under I2I worflow.json. Use this as a reference to see how they are all connected.
 
-<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Workflow.JPG?raw=true" width="600" alt="Workflow">
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Workflow.jpg?raw=true" width="600" alt="Workflow">
 
