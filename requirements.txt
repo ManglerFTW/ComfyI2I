@@ -1,7 +1,7 @@
 numpy
 torch
 torchvision
-tensorflor
+tensorflow
 subprocess
 math
 skimage
