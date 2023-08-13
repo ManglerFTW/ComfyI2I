@@ -2,7 +2,5 @@ numpy
 torch
 torchvision
 tensorflow
-subprocess
-math
-skimage
+scikit-image
 scipy
