@@ -657,7 +657,7 @@ class Mask_Ops:
             inputs = CLIPSegProcessor.from_pretrained(model, cache_dir=cache)
             model = CLIPSegForImageSegmentation.from_pretrained(model, cache_dir=cache)
             
-            image = tensor2pil(image)
+            image = image.convert('RGB')
             cache = os.path.join(MODELS_DIR, 'clipseg')
 
             with torch.no_grad():
