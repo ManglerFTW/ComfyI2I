@@ -14,22 +14,26 @@
 # THE SOFTWARE.
 
 import numpy as np
-import operator as op
+from collections import namedtuple
+import cv2
 import torch
 import sys
 import os
 import folder_paths as comfy_paths
 from torchvision.ops import masks_to_boxes
-from torchvision.transforms.functional import to_tensor
 import torchvision.transforms.functional as TF
-import tensorflow as tf
-import torch.nn.functional as torchfn
-from PIL import Image, ImageFilter, ImageOps, ImageDraw
-from torchvision.transforms import ToTensor
-from torchvision import transforms
+import torch.nn.functional as F
+from PIL import Image, ImageFilter, ImageOps
 import subprocess
 import math
-from skimage import color, exposure
+
+# Check for CUDA availability
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+ARRAY_DATATYPE = torch.int32  # Corresponding to 'l'
+
+Rgb = namedtuple('Rgb', ('r', 'g', 'b'))
+Hsl = namedtuple('Hsl', ('h', 's', 'l'))
 
 VERY_BIG_SIZE = 1024 * 1024
 MAX_RESOLUTION=8192
@@ -203,6 +207,406 @@ def pil2tensor_stacked(image):
     else:
         raise ValueError(f"Unexpected datatype for input to 'pil2tensor_stacked'. Expected a PIL Image or tensor, but received type: {type(image)}")
 
+
+
+class Color(object):
+    def __init__(self, r, g, b, proportion):
+        self.rgb = Rgb(r, g, b)
+        self.proportion = proportion
+    
+    def __repr__(self):
+        return "<colorgram.py Color: {}, {}%>".format(
+            str(self.rgb), str(self.proportion * 100))
+
+    @property
+    def hsl(self):
+        try:
+            return self._hsl
+        except AttributeError:
+            self._hsl = Hsl(*hsl(*self.rgb))
+            return self._hsl
+
+def extract(image_np, number_of_colors, mask_np=None):
+    # Check and convert the image if needed
+    if len(image_np.shape) == 2 or image_np.shape[2] != 3:  # If grayscale or not RGB
+        image_np = cv2.cvtColor(image_np, cv2.COLOR_GRAY2RGB)
+    
+    samples = sample(image_np, mask_np)
+    used = pick_used(samples)
+    used.sort(key=lambda x: x[0], reverse=True)
+    return get_colors(samples, used, number_of_colors)
+
+def sample(image, mask=None):
+    top_two_bits = 0b11000000
+
+    sides = 1 << 2
+    cubes = sides ** 7
+
+    samples = torch.zeros((cubes,), dtype=torch.float32, device=device)  # Make sure samples is of float32 type
+
+    # Handle mask
+    if mask is not None:
+        mask_values = (torch.rand_like(mask, dtype=torch.float32) * 255).int()
+        active_pixels = mask_values > mask
+    else:
+        active_pixels = torch.ones_like(image[:, :, 0], dtype=torch.bool)
+
+    # Calculate RGB, HSL, and Y
+    r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+    h, s, l = hsl(r, g, b)  # We need to convert the hsl function to use PyTorch
+    Y = (r * 0.2126 + g * 0.7152 + b * 0.0722).int()
+
+    # Packing
+    packed = ((Y & top_two_bits) << 4) | ((h & top_two_bits) << 2) | (l & top_two_bits)
+    packed *= 4
+
+    # Accumulate samples
+    packed_active = packed[active_pixels]
+    r_active, g_active, b_active = r[active_pixels], g[active_pixels], b[active_pixels]
+
+    samples.index_add_(0, packed_active, r_active)
+    samples.index_add_(0, packed_active + 1, g_active)
+    samples.index_add_(0, packed_active + 2, b_active)
+    samples.index_add_(0, packed_active + 3, torch.ones_like(packed_active, dtype=torch.float32))
+
+    return samples
+
+def pick_used(samples):
+    # Find indices where count (every 4th value) is non-zero
+    non_zero_indices = torch.arange(0, samples.size(0), 4, device=samples.device)[samples[3::4] > 0]
+
+    # Get counts for non-zero indices
+    counts = samples[non_zero_indices + 3]
+
+    # Combine counts and indices
+    used = torch.stack((counts, non_zero_indices), dim=-1)
+
+    # Convert torch tensors to list of tuples on CPU
+    used_tuples = [(int(count.item()), int(idx.item())) for count, idx in zip(used[:, 0], used[:, 1])]
+
+    return used_tuples
+
+def get_colors(samples, used, number_of_colors):
+    number_of_colors = min(number_of_colors, len(used))
+    used = used[:number_of_colors]
+    
+    # Extract counts and indices
+    counts, indices = zip(*used)
+    counts = torch.tensor(counts, dtype=torch.long, device=device)
+    indices = torch.tensor(indices, dtype=torch.long, device=device)
+
+    # Calculate total pixels
+    total_pixels = torch.sum(counts)
+
+    # Get RGB values
+    r_vals = samples[indices] // counts
+    g_vals = samples[indices + 1] // counts
+    b_vals = samples[indices + 2] // counts
+
+    # Convert Torch tensors to lists
+    r_vals_list = r_vals.tolist()
+    g_vals_list = g_vals.tolist()
+    b_vals_list = b_vals.tolist()
+    counts_list = counts.tolist()
+
+    # Create Color objects
+    colors = [Color(r, g, b, count) for r, g, b, count in zip(r_vals_list, g_vals_list, b_vals_list, counts_list)]
+
+    # Update proportions
+    for color in colors:
+        color.proportion /= total_pixels.item()
+
+    return colors
+
+def hsl(r, g, b):
+    r, g, b = r / 255.0, g / 255.0, b / 255.0
+    
+    max_val, _ = torch.max(torch.stack([r, g, b]), dim=0)
+    min_val, _ = torch.min(torch.stack([r, g, b]), dim=0)
+    diff = max_val - min_val
+    
+    # Luminance
+    l = (max_val + min_val) / 2.0
+
+    # Saturation
+    s = torch.where(
+        (max_val == min_val) | (l == 0),
+        torch.zeros_like(l),
+        torch.where(l < 0.5, diff / (max_val + min_val), diff / (2.0 - max_val - min_val))
+    )
+    
+    # Hue
+    conditions = [
+        max_val == r,
+        max_val == g,
+        max_val == b
+    ]
+
+    values = [
+        ((g - b) / diff) % 6,
+        ((b - r) / diff) + 2,
+        ((r - g) / diff) + 4
+    ]
+
+    h = torch.zeros_like(r)
+    for condition, value in zip(conditions, values):
+        h = torch.where(condition, value, h)
+    h /= 6.0
+
+    return (h * 255).int(), (s * 255).int(), (l * 255).int()
+
+def color_distance(pixel_color, palette_color):
+    return torch.norm(pixel_color - palette_color)
+
+def segment_image(image_torch, palette_colors, mask_torch=None, threshold=128):
+    """
+    Segment the image based on the color similarity of each color in the palette using PyTorch.
+    """
+    if mask_torch is None:
+        mask_torch = torch.ones(image_torch.shape[:2], device='cuda') * 255
+
+    output_image_torch = torch.zeros_like(image_torch)
+
+    # Convert palette colors to PyTorch tensor
+    palette_torch = torch.tensor([list(color.rgb) for color in palette_colors], device='cuda').float()
+
+    distances = torch.norm(image_torch.unsqueeze(-2) - palette_torch, dim=-1)
+    closest_color_indices = torch.argmin(distances, dim=-1)
+
+    for idx, palette_color in enumerate(palette_torch):
+        output_image_torch[closest_color_indices == idx] = palette_color
+
+    output_image_torch[mask_torch < threshold] = image_torch[mask_torch < threshold]
+
+    # Convert the PyTorch tensor back to a numpy array for saving or further operations
+    output_image_np = output_image_torch.cpu().numpy().astype('uint8')
+    return output_image_np
+
+def calculate_luminance_vectorized(colors):
+    """Calculate the luminance of an array of RGB colors using PyTorch."""
+    R, G, B = colors[:, 0], colors[:, 1], colors[:, 2]
+    return 0.299 * R + 0.587 * G + 0.114 * B
+
+def luminance_match(palette1, palette2):
+    # Convert palettes to PyTorch tensors
+    palette1_rgb = torch.tensor([color.rgb for color in palette1], device='cuda').float()
+    palette2_rgb = torch.tensor([color.rgb for color in palette2], device='cuda').float()
+
+    luminance1 = calculate_luminance_vectorized(palette1_rgb)
+    luminance2 = calculate_luminance_vectorized(palette2_rgb)
+
+    # Sort luminances and get the sorted indices
+    sorted_indices1 = torch.argsort(luminance1)
+    sorted_indices2 = torch.argsort(luminance2)
+
+    reordered_palette2 = [None] * len(palette2)
+
+    # Match colors based on sorted luminance order
+    for idx1, idx2 in zip(sorted_indices1.cpu().numpy(), sorted_indices2.cpu().numpy()):
+        print(f"idx1: {idx1}, idx2: {idx2}")  # Add this to debug
+        reordered_palette2[idx1] = palette2[idx2]
+
+    return reordered_palette2
+
+def apply_blur(image_torch, blur_radius, blur_amount):
+    image_torch = image_torch.float().div(255.0)
+    channels = image_torch.shape[2]
+
+    kernel_size = int(6 * blur_radius + 1)
+    kernel_size += 1 if kernel_size % 2 == 0 else 0
+    
+    # Calculate the padding required to keep the output size the same
+    padding = kernel_size // 2
+    
+    # Create a Gaussian kernel
+    x = torch.linspace(-blur_amount, blur_amount, kernel_size).to(image_torch.device)
+    x = torch.exp(-x**2 / (2 * blur_radius**2))
+    x /= x.sum()
+    kernel = x[:, None] * x[None, :]
+    
+    # Apply the kernel using depthwise convolution
+    channels = image_torch.shape[-1]
+    kernel = kernel[None, None, ...].repeat(channels, 1, 1, 1)
+    blurred = F.conv2d(image_torch.permute(2, 0, 1)[None, ...], kernel, groups=channels, padding=padding)
+    
+    # Convert the tensor back to byte and de-normalize
+    blurred = (blurred * 255.0).byte().squeeze(0).permute(1, 2, 0)
+    return blurred
+
+def refined_replace_and_blend_colors(Source_np, img_np, palette1, modified_palette2, blur_radius=0, blur_amount=0, mask_torch=None):
+    # Convert numpy arrays to torch tensors on GPU
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    Source = torch.from_numpy(Source_np).float().to(device)
+    img_torch = torch.tensor(img_np, device=device).float()
+
+    palette1_rgb = torch.stack([torch.tensor(color.rgb, device=device).float() if hasattr(color, 'rgb') else torch.tensor(color, device=device).float() for color in palette1])
+    modified_palette2_rgb = torch.stack([torch.tensor(color.rgb, device=device).float() if hasattr(color, 'rgb') else torch.tensor(color, device=device).float() for color in modified_palette2])
+
+    # Direct color replacement using broadcasting
+    distances = torch.norm(img_torch[:, :, None] - palette1_rgb, dim=-1)
+    closest_indices = torch.argmin(distances, dim=-1)
+    intermediate_output = modified_palette2_rgb[closest_indices]
+    
+    # Convert to uint8 if not already
+    intermediate_output = torch.clamp(intermediate_output, 0, 255).byte()
+
+    # Apply blur if needed
+    if blur_radius > 0 and blur_amount > 0:
+        blurred_output = apply_blur(intermediate_output, blur_radius, blur_amount)
+    else:
+        blurred_output = intermediate_output
+
+    # Blend based on the mask's intensity values if provided
+    if mask_torch is not None:
+        three_channel_mask = mask_torch[:, :, None].expand_as(Source)
+        output_torch = Source * (1 - three_channel_mask) + blurred_output.float() * three_channel_mask
+    else:
+        output_torch = blurred_output
+    
+    output_np = output_torch.cpu().numpy().astype(np.uint8)
+
+    return output_np
+
+def torch_rgb_to_hsv(rgb):
+    """
+    Convert an RGB image to HSV.
+    Assumes rgb is a PyTorch tensor with values in [0, 1].
+    """
+
+    # Get R, G, B values
+    r = rgb[..., 0]
+    g = rgb[..., 1]
+    b = rgb[..., 2]
+
+    max_val, _ = torch.max(rgb, dim=-1)
+    min_val, _ = torch.min(rgb, dim=-1)
+    diff = max_val - min_val
+
+    # Calculate Hue
+    h = torch.zeros_like(r)
+    h[diff == 0] = 0
+    mask = (max_val == r) & (diff != 0)
+    h[mask] = (60 * ((g[mask] - b[mask]) / diff[mask]) + 360) % 360
+    mask = max_val == g
+    h[mask] = (60 * ((b[mask] - r[mask]) / diff[mask]) + 120) % 360
+    mask = max_val == b
+    h[mask] = (60 * ((r[mask] - g[mask]) / diff[mask]) + 240) % 360
+    h = h / 360.  # Normalize to [0, 1]
+
+    # Calculate Saturation
+    s = torch.zeros_like(r)
+    s[max_val != 0] = diff[max_val != 0] / max_val[max_val != 0]
+
+    # Value
+    v = max_val
+
+    hsv = torch.stack([h, s, v], dim=-1)
+    return hsv
+
+def torch_hsv_to_rgb(hsv):
+    """
+    Convert an HSV image to RGB.
+    Assumes hsv is a PyTorch tensor with values in [0, 1] for hue and [0, 1] for saturation/value.
+    """
+
+    h = hsv[..., 0] * 360.
+    s = hsv[..., 1]
+    v = hsv[..., 2]
+
+    c = v * s
+    hh = h / 60.
+    x = c * (1 - torch.abs(hh % 2 - 1))
+    m = v - c
+
+    r, g, b = v, v, v  # Initialize with value
+
+    mask = (hh >= 0) & (hh < 1)
+    r[mask] = c[mask]
+    g[mask] = x[mask]
+
+    mask = (hh >= 1) & (hh < 2)
+    r[mask] = x[mask]
+    g[mask] = c[mask]
+
+    mask = (hh >= 2) & (hh < 3)
+    g[mask] = c[mask]
+    b[mask] = x[mask]
+
+    mask = (hh >= 3) & (hh < 4)
+    g[mask] = x[mask]
+    b[mask] = c[mask]
+
+    mask = (hh >= 4) & (hh < 5)
+    r[mask] = x[mask]
+    b[mask] = c[mask]
+
+    mask = (hh >= 5) & (hh < 6)
+    r[mask] = c[mask]
+    b[mask] = x[mask]
+
+    r += m
+    g += m
+    b += m
+
+    rgb = torch.stack([r, g, b], dim=-1)
+    return rgb
+
+def retain_luminance_hsv_swap(img1_np, img2_np, strength):
+    """
+    Blend two images while retaining the luminance of the first.
+    The blending is controlled by the strength parameter.
+    Assumes img1_np and img2_np are numpy arrays in BGR format.
+    """
+
+    # Convert BGR to RGB
+    img1_rgb_np = cv2.cvtColor(img1_np, cv2.COLOR_BGR2RGB).astype(float) / 255.0
+    img2_rgb_np = cv2.cvtColor(img2_np, cv2.COLOR_BGR2RGB).astype(float) / 255.0
+
+    # Blend the two RGB images linearly based on the strength
+    blended_rgb_np = (1 - strength) * img1_rgb_np + strength * img2_rgb_np
+
+    # Convert the blended RGB image and the original RGB image to YUV
+    blended_yuv_np = cv2.cvtColor((blended_rgb_np * 255).astype(np.uint8), cv2.COLOR_RGB2YUV)
+    img1_yuv_np = cv2.cvtColor(img1_np, cv2.COLOR_BGR2YUV)
+
+    # Replace the Y channel (luminance) of the blended image with the original image's luminance
+    blended_yuv_np[:,:,0] = img1_yuv_np[:,:,0]
+
+    # Convert back to BGR
+    result_bgr_np = cv2.cvtColor(blended_yuv_np, cv2.COLOR_YUV2BGR)
+
+    return result_bgr_np
+
+def adjust_gamma_contrast(image_np, gamma, contrast, brightness, mask_np=None):
+    # Ensure CUDA is available
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+    # Transfer data to PyTorch tensors and move to the appropriate device
+    image_torch = torch.tensor(image_np, dtype=torch.float32).to(device)
+    
+    # Gamma correction using a lookup table
+    inv_gamma = 1.0 / gamma
+    table = torch.tensor([(i / 255.0) ** inv_gamma * 255 for i in range(256)], device=device).float()
+    gamma_corrected = torch.index_select(table, 0, image_torch.long().flatten()).reshape_as(image_torch)
+    
+    # Contrast and brightness adjustment
+    contrast_adjusted = contrast * gamma_corrected + brightness
+    contrast_adjusted = torch.clamp(contrast_adjusted, 0, 255).byte()
+    
+    # If mask is provided, blend the original and adjusted images
+    if mask_np is not None:
+        mask_torch = torch.tensor(mask_np, device=device).float() / 255.0
+        three_channel_mask = mask_torch.unsqueeze(-1).expand_as(image_torch)
+        contrast_adjusted = image_torch * (1 - three_channel_mask) + contrast_adjusted.float() * three_channel_mask
+
+    # Transfer data back to numpy array
+    result_np = contrast_adjusted.cpu().numpy()
+
+    return result_np
+
+
+
+
 def CutByMask(image, mask, force_resize_width, force_resize_height, mask_mapping_optional):
 
     if len(image.shape) < 4:
@@ -219,7 +623,7 @@ def CutByMask(image, mask, force_resize_width, force_resize_height, mask_mapping
 
     # Scale the mask to match the image size if it isn't
     B, H, W, _ = image.shape
-    mask = torch.nn.functional.interpolate(mask.unsqueeze(1), size=(H, W), mode='nearest')[:,0,:,:]
+    mask = F.interpolate(mask.unsqueeze(1), size=(H, W), mode='nearest')[:,0,:,:]
     
     MB, _, _ = mask.shape
 
@@ -266,7 +670,7 @@ def CutByMask(image, mask, force_resize_width, force_resize_height, mask_mapping
             xmin = int(min_x[i].item())
             xmax = int(max_x[i].item())
             single = (image[i, ymin:ymax+1, xmin:xmax+1,:]).unsqueeze(0)
-            resized = torch.nn.functional.interpolate(single.permute(0, 3, 1, 2), size=(use_height, use_width), mode='bicubic').permute(0, 2, 3, 1)
+            resized = F.interpolate(single.permute(0, 3, 1, 2), size=(use_height, use_width), mode='bicubic').permute(0, 2, 3, 1)
             result[i] = resized[0]
 
     # Preserve our type unless we were previously RGB and added non-opaque alpha due to the mask size
@@ -388,7 +792,7 @@ def PasteByMask(image_base, image_to_paste, mask, resize_behavior, mask_mapping_
         if PB < B:
             assert(B % PB == 0)
             image_to_paste = image_to_paste.repeat(B // PB, 1, 1, 1)
-    mask = torch.nn.functional.interpolate(mask.unsqueeze(1), size=(H, W), mode='nearest')[:,0,:,:]
+    mask = F.interpolate(mask.unsqueeze(1), size=(H, W), mode='nearest')[:,0,:,:]
     MB, MH, MW = mask.shape
 
     # masks_to_boxes errors if the tensor is all zeros, so we'll add a single pixel and zero it out at the end
@@ -445,7 +849,7 @@ def PasteByMask(image_base, image_to_paste, mask, resize_behavior, mask_mapping_
             # Resize the image we're pasting if needed
             resized_image = image_to_paste[i].unsqueeze(0)
             if SH != height or SW != width:
-                resized_image = torch.nn.functional.interpolate(resized_image.permute(0, 3, 1, 2), size=(height,width), mode='bicubic').permute(0, 2, 3, 1)
+                resized_image = F.interpolate(resized_image.permute(0, 3, 1, 2), size=(height,width), mode='bicubic').permute(0, 2, 3, 1)
 
             pasting = torch.ones([H, W, C])
             ymid = float(mid_y[i].item())
@@ -495,6 +899,7 @@ class Mask_Ops:
                 "required": {
                     "image": ("IMAGE",),
                     "text": ("STRING", {"default":"", "multiline": False}),
+                    "separate_mask": ("INT", {"default":0, "min":0, "max":1, "step":1}),
                     "text_sigma": ("INT", {"default":30, "min":0, "max":150, "step":1}),
                     "use_text": ("INT", {"default":0, "min":0, "max":1, "step":1}),
                     "blend_percentage": ("FLOAT", {"default": 0, "min": 0.0, "max": 1.0, "step": 0.01}),
@@ -513,11 +918,11 @@ class Mask_Ops:
 
     CATEGORY = "I2I"
 
-    RETURN_TYPES = ("IMAGE","MASK_MAPPING",)
-    RETURN_NAMES = ("mask", "mask mapping")
+    RETURN_TYPES = ("IMAGE", "MASK", "MASK_MAPPING",)
+    RETURN_NAMES = ("mask_image", "mask", "mask mapping")
     FUNCTION = "Mask_Ops"
 
-    def Mask_Ops(self, image, text, text_sigma, use_text, blend_percentage, black_level, mid_level, white_level, channel, shrink_grow, invert=0, blur_radius=5.0, mask=None):
+    def Mask_Ops(self, image, text, separate_mask, text_sigma, use_text, blend_percentage, black_level, mid_level, white_level, channel, shrink_grow, invert=0, blur_radius=5.0, mask=None):
         channels = ["red", "green", "blue"]
 
         # Freeze PIP modules
@@ -610,18 +1015,22 @@ class Mask_Ops:
                 region_tensor = pil2mask(region_mask).unsqueeze(0).unsqueeze(1)
                 return region_tensor
 
-        def separate(mask):
-            mask = tensor2mask(mask)
+        def separate(mask, separate_flag=1):
+            if separate_flag == 0:
+                # Create an unseparated mapping tensor of the same length as the batch dimension
+                mapping = torch.arange(mask.shape[0], device=mask.device, dtype=torch.int)
+                return mask, mapping
 
+            mask = tensor2mask(mask)
             
-            thresholded = torch.gt(mask,0).unsqueeze(1)
+            thresholded = torch.gt(mask, 0).unsqueeze(1)
             B, H, W = mask.shape
             components = torch.arange(B * H * W, device=mask.device, dtype=mask.dtype).reshape(B, 1, H, W) + 1
             components[~thresholded] = 0
 
             while True:
                 previous_components = components
-                components = torch.nn.functional.max_pool2d(components, kernel_size=3, stride=1, padding=1)
+                components = F.max_pool2d(components, kernel_size=3, stride=1, padding=1)
                 components[~thresholded] = 0
                 if torch.equal(previous_components, components):
                     break
@@ -641,7 +1050,7 @@ class Mask_Ops:
                 mapping[index] = image_index
                 index += 1
 
-            return result,mapping
+            return result, mapping
 
         image = tensor2pil(image)
 
@@ -690,9 +1099,11 @@ class Mask_Ops:
 
         else:
             if mask is None:
-                raise ValueError("A mask is required when use_text is 0.")
-            
-            mask = mask
+                # Create a full mask for the entire image
+                mask_shape = (image.size[1], image.size[0])  # Assuming image is in (H, W, C) format
+                mask = torch.ones(mask_shape, dtype=torch.float32)
+            else:
+                mask = mask
 
         if shrink_grow < 0:
             mask = erode(mask, shrink_grow)
@@ -768,12 +1179,12 @@ class Mask_Ops:
         if invert == 1:
             result = 1.0 - result       
 
-        result, mapping = separate(result)
+        result, mapping = separate(result, separate_mask)
 
         if invert == 1:
             result = 1.0 - result 
 
-        return (result,mapping,)
+        return (result, result, mapping,)
     
     class AdjustLevels:
         def __init__(self, min_level, mid_level, max_level):
@@ -795,8 +1206,7 @@ class Mask_Ops:
             im = ImageOps.autocontrast(im, cutoff=self.max_level)
 
             return im
-        
-        
+
 class Color_Correction:
     def __init__(self):
         pass
@@ -807,7 +1217,16 @@ class Color_Correction:
             "required": {
                 "source_image": ("IMAGE",),
                 "target_image": ("IMAGE",),
-                "factor": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "no_of_colors": ("INT", {"default": 6, "min": 0, "max": 256, "step": 1}),
+                "blur_radius": ("INT", {"default": 2, "min": 0, "max": 100, "step": 1}),
+                "blur_amount": ("INT", {"default": 2, "min": 0, "max": 100, "step": 1}),
+                "strength": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 2.0, "step": 0.1}),
+                "gamma": ("FLOAT", {"default": 1.0, "min": 0.10, "max": 2.0, "step": 0.1}),
+                "contrast": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 3.0, "step": 0.1}),
+                "brightness": ("FLOAT", {"default": 1.0, "min": 0.0, "max": 100.0, "step": 0.1}),
+            },
+            "optional": {
+                "mask": ("MASK",),
             },
         }
 
@@ -815,12 +1234,79 @@ class Color_Correction:
 
     RETURN_TYPES = ("IMAGE", )
     RETURN_NAMES = ("image", )
-    FUNCTION = "ColorXfer"
+    FUNCTION = "ColorXfer2"
 
-    def ColorXfer(cls, target_image, source_image, factor=1):
-        result = apply_color_correction(target_image, source_image, factor)
-        return (result, )  
-    
+    def ColorXfer2(cls, source_image, target_image, no_of_colors, blur_radius, blur_amount, strength, gamma, contrast, brightness, mask=None):   
+        if mask is not None:
+            if torch.is_tensor(mask):
+                # Convert to grayscale if it's a 3-channel image
+                if mask.shape[-1] == 3:
+                    mask = torch.mean(mask, dim=-1)
+
+                # Remove batch dimension if present
+                if mask.dim() == 3:
+                    mask = mask.squeeze(0)
+
+                mask_np1 = (mask.cpu().numpy() * 255).astype(np.uint8)
+            else:
+                mask_np1 = (mask * 255).astype(np.uint8)
+
+            mask_np = mask_np1 / 255.0
+            mask_torch = torch.tensor(mask_np).to(device)
+
+        # If the source_image is a tensor, convert it to a numpy array
+        if torch.is_tensor(source_image):
+            Source_np = (source_image[0].cpu().numpy() * 255).astype(np.uint8)
+        else:
+            Source_np = (source_image * 255).astype(np.uint8)
+
+        # If the source_image is a tensor, convert it to a numpy array
+        if torch.is_tensor(target_image):
+            Target_np = (target_image[0].cpu().numpy() * 255).astype(np.uint8)
+        else:
+            Target_np = (target_image * 255).astype(np.uint8)
+
+        # Load the source image and convert to torch tensor
+        Source_np = cv2.cvtColor(Source_np, cv2.COLOR_BGR2RGB)
+        Source = torch.from_numpy(Source_np).float().to(device)
+
+        # Extract colors from the source image
+        colors1 = extract(Source, no_of_colors, mask_np=mask_torch)
+
+        # Load the target image
+        Target_np = cv2.cvtColor(Target_np, cv2.COLOR_BGR2RGB)
+        Target = torch.from_numpy(Target_np).float().to(device=device)
+
+        # Extract colors from the target image
+        colors2 = extract(Target, no_of_colors)     
+
+        min_length = min(len(colors1), len(colors2))
+        colors1 = colors1[:min_length]
+        colors2 = colors2[:min_length]
+
+        # Segment the image
+        segmented_np = segment_image(Source, colors1, mask_torch=mask_torch, threshold=1)       
+
+        matched_pairs = luminance_match(colors1, colors2)
+
+        result_rgb = refined_replace_and_blend_colors(Source.cpu().numpy(), segmented_np, colors1, matched_pairs, blur_radius, blur_amount, mask_torch=mask_torch)
+
+        luminance_np = retain_luminance_hsv_swap(Source.cpu().numpy(), result_rgb, strength)
+
+        gamma_contrast_np = adjust_gamma_contrast(luminance_np, gamma, contrast, brightness, mask_np=mask_np1)
+
+        final_img_np_rgb = cv2.cvtColor(gamma_contrast_np, cv2.COLOR_BGR2RGB)
+
+        # Convert the numpy array back to a PyTorch tensor
+        final_img_tensor = torch.tensor(final_img_np_rgb).float().to(device)
+
+        final_img_tensor = final_img_tensor.unsqueeze(0)
+
+        if final_img_tensor.max() > 1.0:
+            final_img_tensor /= 255.0
+
+        return (final_img_tensor, )
+ 
 class MaskToRegion:
     def __init__(self):
         pass
