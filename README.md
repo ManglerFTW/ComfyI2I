@@ -141,4 +141,4 @@ The combine and paste node will take the new images from the VAE Decode node, re
  ### Color Transfer Workflow
  A Basic workflow for Color Transfer has been included in the workflows directory under Color Xfer Workflow.json. Use this as a reference to see how it works.
  
- <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ColorXferworkflow.JPG?raw=true" width="600" alt="ColorXferworkflow">
+ <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/V2/ColorXferworkflow.JPG?raw=true" width="600" alt="ColorXferworkflow">
