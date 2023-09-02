@@ -1,0 +1,320 @@
+{
+  "last_node_id": 397,
+  "last_link_id": 59335,
+  "nodes": [
+    {
+      "id": 87,
+      "type": "LoadImage",
+      "pos": [
+        164,
+        1053
+      ],
+      "size": [
+        794.0693724097752,
+        916.5139546278999
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            59268
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "14387-3274465582-Photo of fusion of a huge savage rabbit monster with an alien in the space, style of laurie greasley, studio ghibli, akira toriy.png",
+        "image"
+      ]
+    },
+    {
+      "id": 338,
+      "type": "LoadImage",
+      "pos": [
+        171,
+        58
+      ],
+      "size": [
+        782.6728711721954,
+        899.2087522146759
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            59266,
+            59306
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "clipspace/clipspace-mask-6355470.899999976.png [input]",
+        "image"
+      ]
+    },
+    {
+      "id": 374,
+      "type": "PreviewImage",
+      "pos": [
+        1555,
+        1104
+      ],
+      "size": {
+        "0": 315.37579345703125,
+        "1": 317.5821228027344
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 59308
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      }
+    },
+    {
+      "id": 387,
+      "type": "SaveImage",
+      "pos": [
+        2242,
+        278
+      ],
+      "size": [
+        1130.873684716073,
+        1392.548730847608
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 59298
+        }
+      ],
+      "properties": {},
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 391,
+      "type": "Mask Ops",
+      "pos": [
+        1025,
+        384
+      ],
+      "size": {
+        "0": 315,
+        "1": 362
+      },
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 59306
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mask_image",
+          "type": "IMAGE",
+          "links": [
+            59308
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "links": [
+            59321
+          ],
+          "shape": 3,
+          "slot_index": 1
+        },
+        {
+          "name": "mask mapping",
+          "type": "MASK_MAPPING",
+          "links": null,
+          "shape": 3
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Mask Ops"
+      },
+      "widgets_values": [
+        "",
+        0,
+        30,
+        0,
+        1,
+        0,
+        127.5,
+        255,
+        "green",
+        0,
+        0,
+        5
+      ]
+    },
+    {
+      "id": 371,
+      "type": "Color Transfer",
+      "pos": [
+        1842,
+        403
+      ],
+      "size": {
+        "0": 315,
+        "1": 242
+      },
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source_image",
+          "type": "IMAGE",
+          "link": 59266
+        },
+        {
+          "name": "target_image",
+          "type": "IMAGE",
+          "link": 59268
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 59321
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            59298
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Color Transfer"
+      },
+      "widgets_values": [
+        13,
+        10,
+        2,
+        1.3,
+        1,
+        1,
+        1
+      ]
+    }
+  ],
+  "links": [
+    [
+      59266,
+      338,
+      0,
+      371,
+      0,
+      "IMAGE"
+    ],
+    [
+      59268,
+      87,
+      0,
+      371,
+      1,
+      "IMAGE"
+    ],
+    [
+      59298,
+      371,
+      0,
+      387,
+      0,
+      "IMAGE"
+    ],
+    [
+      59306,
+      338,
+      0,
+      391,
+      0,
+      "IMAGE"
+    ],
+    [
+      59308,
+      391,
+      0,
+      374,
+      0,
+      "IMAGE"
+    ],
+    [
+      59321,
+      391,
+      1,
+      371,
+      2,
+      "MASK"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {},
+  "version": 0.4
+}
