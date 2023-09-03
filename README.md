@@ -9,6 +9,7 @@
 ## New Features
 - Mask_Ops node will now output the whole image if mask = None and use_text = 0
 - Mask_Ops node now has a separate_mask function that if 0, will keep all mask islands in 1 image vs separating them into their own images if it's at 1 (use 0 for color transfer)
+- New Color Tansfer and Multi-Color Transfer Workflows added
 - Significantly improved Color_Transfer node
   - Extract up to 256 colors from each image (generally between 5-20 is fine) then segment the source image by the extracted palette and replace the colors in each segment
   - Set a blur to the segments created
@@ -142,3 +143,8 @@ The combine and paste node will take the new images from the VAE Decode node, re
  A Basic workflow for Color Transfer has been included in the workflows directory under Color Xfer Workflow.json. Use this as a reference to see how it works.
  
  <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/V2/ColorXferworkflow.JPG?raw=true" width="600" alt="ColorXferworkflow">
+
+  ### Multi Color Transfer Workflow
+ A Basic workflow for Color Transfer has been included in the workflows directory under Multi_XFer_Workflow.json. Use this as a reference to see how it works.
+ 
+ <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/V2/multi_xfer.JPG?raw=true" width="600" alt="Multi ColorXferworkflow">
