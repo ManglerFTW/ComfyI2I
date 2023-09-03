@@ -35,7 +35,7 @@ This is a standalone node that can take the colors of one image and transfer the
 
 ### Variables:
 #### No_of_Colors:
-Choose the amount of colors you would like to extract from each image. Usually beteen 5-20 is fine. For smaller masked regions you can bring it to 1-5 and it will only extract those that are most dominant.
+Choose the amount of colors you would like to extract from each image. Usually between 5-20 is fine. For smaller masked regions you can bring it to 1-5 and it will only extract those that are most dominant.
 
 <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/V2/no_of_colors.JPG?raw=true" width="600" alt="no_of_colors">
 
