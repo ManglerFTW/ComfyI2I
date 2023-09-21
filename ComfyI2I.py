@@ -619,6 +619,7 @@ def CutByMask(image, mask, force_resize_width, force_resize_height, mask_mapping
     mask = tensor2mask(mask)
 
     if mask_mapping_optional is not None:
+        mask_mapping_optional = mask_mapping_optional.long()
         image = image[mask_mapping_optional]
 
     # Scale the mask to match the image size if it isn't
