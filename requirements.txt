@@ -2,8 +2,6 @@ numpy
 torch
 torchvision
 tensorflow
-subprocess
-math
 skimage
 scipy
 cv2
