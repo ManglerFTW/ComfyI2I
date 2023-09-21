@@ -2,6 +2,6 @@ numpy
 torch
 torchvision
 tensorflow
-skimage
+scikit-image
 scipy
-cv2
+opencv-python
