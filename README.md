@@ -4,13 +4,27 @@
   
   If you find these nodes useful please consider contributing to it's further development. All donations are much appreciated. [Buy me a coffee](https://bmc.link/ManglerFTW)
   
+## ComfyShop Update - 9/25/2023
+
+## New Features
+  ComfyShop has been introduced to the ComfyI2I family. Enjoy a comfortable and intuitive painting app. ComfyShop phase 1 is to establish the basic painting features for ComfyUI.
+  To open ComfyShop, simply right click on any image node that outputs an image and mask and you will see the ComfyShop option much in the same way you would see MaskEditor. 
+  Current features of ComfyShop include:
+#
+  - Paint both mask('greyscale') and color and output accordingly.
+  - Controls(shift + right click) for brush size(mouse wheel), opacity(shift + alt + mouse wheel), softness(alt + mousewheel), and color.
+  - Undo(ctrl + z) / Redo(shift + ctrl + z)
+  - Zoom In/Out(ctrl + space + mouse move left/right) 
+  - Pan(ctrl + space + click and drag image canvas with mouse)
+  - Autofocus(f)
+  
 ## V2 Update - 9/2/2023
 
 ## New Features
-- Mask_Ops node will now output the whole image if mask = None and use_text = 0
-- Mask_Ops node now has a separate_mask function that if 0, will keep all mask islands in 1 image vs separating them into their own images if it's at 1 (use 0 for color transfer)
-- New Color Tansfer and Multi-Color Transfer Workflows added
-- Significantly improved Color_Transfer node
+  - Mask_Ops node will now output the whole image if mask = None and use_text = 0
+  - Mask_Ops node now has a separate_mask function that if 0, will keep all mask islands in 1 image vs separating them into their own images if it's at 1 (use 0 for color transfer)
+  - New Color Tansfer and Multi-Color Transfer Workflows added
+  - Significantly improved Color_Transfer node
   - Extract up to 256 colors from each image (generally between 5-20 is fine) then segment the source image by the extracted palette and replace the colors in each segment
   - Set a blur to the segments created
   - Control the strength of the color transfer function
@@ -29,6 +43,30 @@
   Tools will be located in the I2I menu.
 
 ## Features:
+
+### ComfyShop
+#### Access ComfyShop:
+Right click on any image node that has 'IMAGE' and 'MASK' as outputs and select ComfyShop in the pop up menu.
+
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ComfyShop/Access.jpg?raw=true" width="600" alt="Access ComfyShop">
+
+#### Brush Menu:
+To access the brush menu press shift and the right mouse button anywhere on the canvas. Brush settings can also be changed by keyboard shortcuts which is recommended.
+
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ComfyShop/Brush_Menu.jpg?raw=true" width="600" alt="Brush Menu">
+
+#### Zoom In/Out:
+Gain more control over your image editing with the ability to zoom in and out, pan, and autofocus your canvas.
+
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ComfyShop/Zoom_Out.jpg?raw=true" width="600" alt="Zoom Out">
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ComfyShop/Zoom_In.jpg?raw=true" width="600" alt="Zoom Out">
+
+#### Save to node:
+Save to node will save anything painted in greyscale to the 'MASK' output and anything painted in RGB mode to the 'IMAGE' output. 
+
+<img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/ComfyShop/Saving_Outputs.jpg?raw=true" width="600" alt="Zoom Out">
+
+##
 
 ### Color Transfer Node (improved for V2)
 This is a standalone node that can take the colors of one image and transfer them to another.
@@ -74,6 +112,7 @@ The Color Transfer node works well with masks created with the Mask_Ops node. Th
 
 <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/V2/xfer_across_channels.JPG?raw=true" width="600" alt="xfer_across_channels">
 
+##
 
 ### Mask Ops Node (improved for V2)
 The mask ops node performs various mask operations on a mask created either from an image or a text prompt.
@@ -124,15 +163,21 @@ Blur your mask.
 
 <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Blur.JPG?raw=true" width="600" alt="Blur_Radius">
 
+##
+
 ### Inpaint Segments Node
 This node essentially will segment and crop your mask and your image based on the mapped bounding boxes of each mask and then upscale them to 1024x1024, or a custom size of your choice. The images then go to a VAE Encode node to be processed.
 
  <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Inpaint_Segments.JPG?raw=true" width="600" alt="Inpaint Segments">
 
+##
+
 ### Combine and Paste Node
 The combine and paste node will take the new images from the VAE Decode node, resize them to the bounding boxes of your mask and paste them over the original image. Use color_xfer_factor to adjust the effects of the color transfer.
 
  <img src="https://github.com/ManglerFTW/ComfyI2I/blob/main/Guide_Images/Combine_and_Paste.JPG?raw=true" width="600" alt="Combine and Paste">
+
+##
 
  ### Workflow
  A Basic workflow with all of the nodes combined has been included in the workflows directory under I2I workflow.json. Use this as a reference to see how they are all connected.
