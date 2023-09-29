@@ -585,32 +585,43 @@ class ComfyShopDialog extends ComfyDialog {
 	}
 
 	resizeHandler = () => {
-		// repositioning and resizing (based on your new logic)
-		const maxImgHeight = window.innerHeight * 0.7;
-		let drawWidth = this.image.width;
-		let drawHeight = this.image.height;
-
-		const aspectRatio = this.image.width / this.image.height;
-
-		if (this.image.height > maxImgHeight) {
-			drawHeight = maxImgHeight;
-			drawWidth = maxImgHeight * aspectRatio;
-		}
-
-		this.imgCanvas.width = drawWidth;
-		this.imgCanvas.height = drawHeight;
-
-		if (this.image.complete && drawWidth > 0 && drawHeight > 0) {
-			this.imgCtx.drawImage(this.image, 0, 0, drawWidth, drawHeight);
+		// Ensure the image is fully loaded
+		if (!this.image.complete) {
+			return;
 		}
 	
-		// update mask
-		this.maskCanvas.width = drawWidth;
-		this.maskCanvas.height = drawHeight;
+		// Calculate the aspect ratio
+		const aspectRatio = this.image.width / this.image.height;
+	
+		// Set the maximum height and calculate the corresponding width
+		const maxImgHeight = window.innerHeight * 0.7;
+		let containerWidth = maxImgHeight * aspectRatio;
+		let containerHeight = maxImgHeight;
+	
+		// Ensure the width does not exceed the window's width
+		if (containerWidth > window.innerWidth) {
+			containerWidth = window.innerWidth;
+			containerHeight = containerWidth / aspectRatio;
+		}
+	
+		// Set the canvas sizes to fit the container
+		this.imgCanvas.width = containerWidth;
+		this.imgCanvas.height = containerHeight;
+	
+		// Resize both mask and backup canvases to the same dimensions
+		this.maskCanvas.width = this.backupCanvas.width = containerWidth;
+		this.maskCanvas.height = this.backupCanvas.height = containerHeight;
+
+		// Draw the image onto the imgCanvas
+		this.imgCtx.clearRect(0, 0, this.imgCanvas.width, this.imgCanvas.height);
+		this.imgCtx.drawImage(this.image, 0, 0, this.imgCanvas.width, this.imgCanvas.height);
+	
+		// Updating the mask and copying between canvases
 		this.maskCanvas.style.top = this.imgCanvas.offsetTop + "px";
 		this.maskCanvas.style.left = this.imgCanvas.offsetLeft + "px";
-		this.backupCtx.drawImage(this.maskCanvas, 0, 0, this.maskCanvas.width, this.maskCanvas.height, 0, 0, this.backupCanvas.width, this.backupCanvas.height);
-		this.maskCtx.drawImage(this.backupCanvas, 0, 0, this.backupCanvas.width, this.backupCanvas.height, 0, 0, this.maskCanvas.width, this.maskCanvas.height);
+		this.backupCtx.drawImage(this.maskCanvas, 0, 0, this.maskCanvas.width, this.maskCanvas.height);
+		this.maskCtx.drawImage(this.backupCanvas, 0, 0, this.backupCanvas.width, this.backupCanvas.height);
+
 	};
 
 	setImages(imgCanvas, backupCanvas) {
@@ -1312,25 +1323,31 @@ class ComfyShopDialog extends ComfyDialog {
 		// Hide the context menu before any drawing operation
 		this.contextMenu.style.display = 'none';
 		
-		// Check for Alt + right mouse button click to show/hide context menu
-		if ((event.altKey || event.shiftKey) && event.button === 2) {
+		// Check for Alt + right mouse button click to show/hide context menu on mouse down
+		if ((event.altKey || event.shiftKey) && event.button === 2 && event.type === 'mousedown') {
 			event.preventDefault();
 			event.stopPropagation();
-			
+		
+			const mouseX = event.clientX;
+			const mouseY = event.clientY;
+		
 			// Toggle the context menu visibility
 			if (this.contextMenu.style.display === 'block') {
+				// Hide the context menu
 				this.contextMenu.style.display = 'none';
 			} else {
-				const mouseX = event.clientX;
-				const mouseY = event.clientY;
+				// Show the context menu
 				this.contextMenu.style.left = mouseX + 'px';
 				this.contextMenu.style.top = mouseY + 'px';
 				this.contextMenu.style.display = 'block';
-				
+		
 				this.createContextMenu();
 			}
+		
+			// Prevent drawing when context menu is displayed
 			skipDrawing = true;
 		}
+		
 		if (!skipDrawing) {
 			if (this.isCtrlDown && this.isSpaceDown && event.buttons === 1) {
 				this.isDragging = true;
