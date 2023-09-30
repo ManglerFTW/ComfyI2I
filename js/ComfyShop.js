@@ -180,6 +180,8 @@ class ComfyShopDialog extends ComfyDialog {
 		this.brush_size = 50; // Initialize brush size
         this.contextMenu = this.createContextMenu(); 
 		this.isDragging = false;
+		this.dragOffsetX = 0;
+		this.dragOffsetY = 0;
 		this.initialOffsetX = 0;
 		this.initialOffsetY = 0;
 
@@ -587,41 +589,50 @@ class ComfyShopDialog extends ComfyDialog {
 	resizeHandler = () => {
 		// Ensure the image is fully loaded
 		if (!this.image.complete) {
+			console.error('Image not yet loaded');
 			return;
 		}
-	
-		// Calculate the aspect ratio
-		const aspectRatio = this.image.width / this.image.height;
-	
-		// Set the maximum height and calculate the corresponding width
-		const maxImgHeight = window.innerHeight * 0.7;
-		let containerWidth = maxImgHeight * aspectRatio;
-		let containerHeight = maxImgHeight;
-	
-		// Ensure the width does not exceed the window's width
-		if (containerWidth > window.innerWidth) {
-			containerWidth = window.innerWidth;
-			containerHeight = containerWidth / aspectRatio;
-		}
-	
-		// Set the canvas sizes to fit the container
-		this.imgCanvas.width = containerWidth;
-		this.imgCanvas.height = containerHeight;
-	
-		// Resize both mask and backup canvases to the same dimensions
-		this.maskCanvas.width = this.backupCanvas.width = containerWidth;
-		this.maskCanvas.height = this.backupCanvas.height = containerHeight;
 
-		// Draw the image onto the imgCanvas
-		this.imgCtx.clearRect(0, 0, this.imgCanvas.width, this.imgCanvas.height);
-		this.imgCtx.drawImage(this.image, 0, 0, this.imgCanvas.width, this.imgCanvas.height);
+		const originalWidth = this.image.width;
+		const originalHeight = this.image.height;
 	
-		// Updating the mask and copying between canvases
+		// Get the viewport size
+		const viewportWidth = window.innerWidth;
+		const viewportHeight = window.innerHeight;
+
+		// Get available screen width and height
+		var availablescreenWidth = screen.availWidth;
+		var availablescreenHeight = screen.availHeight;
+
+		// Calculate the available size for the wrapperDiv while leaving space for other elements
+		const availableWidth = viewportWidth * 0.9;
+		const availableHeight = viewportHeight * 0.78;
+
+		wrapperDiv.style.width = `${originalWidth}px`;
+		wrapperDiv.style.height = `${originalHeight}px`;
+
+		wrapperDiv.style.maxWidth = `${availableWidth}px`;
+		wrapperDiv.style.maxHeight = `${availableHeight}px`;
+
+		// Set the canvas sizes to match the image size
+		this.imgCanvas.width = originalWidth;
+		this.imgCanvas.height = originalHeight;
+		this.maskCanvas.width = originalWidth;
+		this.maskCanvas.height = originalHeight;
+	
+		// Draw the image onto the imgCanvas
+		this.imgCtx.clearRect(0, 0, originalWidth, originalHeight);
+		this.imgCtx.drawImage(this.image, 0, 0, originalWidth, originalHeight);
+
+		// Updating the mask
 		this.maskCanvas.style.top = this.imgCanvas.offsetTop + "px";
 		this.maskCanvas.style.left = this.imgCanvas.offsetLeft + "px";
-		this.backupCtx.drawImage(this.maskCanvas, 0, 0, this.maskCanvas.width, this.maskCanvas.height);
-		this.maskCtx.drawImage(this.backupCanvas, 0, 0, this.backupCanvas.width, this.backupCanvas.height);
-
+	
+		// You may need to adapt the following lines depending on your exact requirements
+		this.backupCtx.drawImage(this.maskCanvas, 0, 0, originalWidth, originalHeight, 0, 0, originalWidth, originalHeight);
+		this.maskCtx.drawImage(this.backupCanvas, 0, 0, originalWidth, originalHeight, 0, 0, originalWidth, originalHeight);
+	
+		this.fitAndCenterImage();
 	};
 
 	setImages(imgCanvas, backupCanvas) {
@@ -797,12 +808,12 @@ class ComfyShopDialog extends ComfyDialog {
 				}
 				return;  // Prevent zooming when dragging
 			}
-		
+	
 			const currentTime = Date.now();
 			if (currentTime - this.lastPointerMoveTime < 16) { 
 				return;
 			}
-		
+	
 			if (this.initialMouseX === null) {
 				this.initialMouseX = event.clientX; 
 				const rect = this.childContainer.getBoundingClientRect();
@@ -811,19 +822,19 @@ class ComfyShopDialog extends ComfyDialog {
 				this.zoomCenterX = (event.clientX - rect.left) / matrix.a - parseFloat(style.left);
 				this.zoomCenterY = (event.clientY - rect.top) / matrix.d - parseFloat(style.top);
 			}
-		
+	
 			// Adjust to use movementX and movementY for more immediate response to direction changes
 			this.adjustZoomLevel(event.movementX > 0 || event.movementY > 0 ? 'in' : 'out');
-		
+	
 			requestAnimationFrame(() => {
 				this.applyZoom();
 			});
-		
+	
 			this.lastPointerMoveTime = currentTime; 
 		} else {
-			this.initialMouseX = null;
+			this.initialMouseX = null;  // Reset the initialMouseX when Ctrl+Space is not pressed
 		}
-		
+	
 		this.cursorX = event.pageX;
 		this.cursorY = event.pageY;
 		this.updateBrushPreview(this);
@@ -886,11 +897,17 @@ class ComfyShopDialog extends ComfyDialog {
 		
 			this.copyToClipspace();
 		}
-		if(event.key === 'f') { // reframe key event
-			self.zoomLevel = 1;  // Reset zoom level to 1
+		if(event.key === 'f') {
+			self.zoomLevel = 1;
 			self.childContainer.style.transform = `scale(${self.zoomLevel})`;  // Resetting zoom level in DOM
 			self.childContainer.style.left = self.left;
 			self.childContainer.style.top = self.top;
+		
+			// Reset the size of wrapperDiv to match the original image dimensions
+			const imageWidth = self.image.width;
+			const imageHeight = self.image.height;
+			wrapperDiv.style.width = `${imageWidth}px`;
+			wrapperDiv.style.height = `${imageHeight}px`;
 		}
 		if (event.key === ']') {
 			self.brush_size = Math.min(self.brush_size+2, 100);
@@ -902,6 +919,10 @@ class ComfyShopDialog extends ComfyDialog {
 
 		if(event.key === 'Shift') {
 			self.isShiftDown = true;
+		}
+
+		if(self.isShiftDown && event.key === 'F') { // Shift + F key event
+			this.fitAndCenterImage();
 		}
 
 		if (event.ctrlKey && event.key.toLowerCase() === 'z') {
@@ -924,6 +945,42 @@ class ComfyShopDialog extends ComfyDialog {
 		}
 
 		self.updateBrushPreview(self);
+	}
+
+	fitAndCenterImage = () => {
+		// Get the dimensions of wrapperDiv
+		const wrapperWidth = wrapperDiv.clientWidth;
+		const wrapperHeight = wrapperDiv.clientHeight;
+
+		// Get the dimensions of the original image
+		const imageWidth = this.image.width;
+		const imageHeight = this.image.height;
+
+		// Calculate the scale needed to fit the image within the wrapperDiv
+		const scaleX = wrapperWidth / imageWidth;
+		const scaleY = wrapperHeight / imageHeight;
+		const scale = Math.min(scaleX, scaleY);
+
+		// Update the zoomLevel
+		this.zoomLevel = scale;
+
+		// Calculate the scaled dimensions of the image
+		const scaledWidth = imageWidth * scale;
+		const scaledHeight = imageHeight * scale;
+
+		// Adjust the wrapperDiv size to match the scaled dimensions of the image
+		wrapperDiv.style.width = `${scaledWidth}px`;
+		wrapperDiv.style.height = `${scaledHeight}px`;
+
+		// Calculate the position to center the image in the adjusted wrapperDiv
+		const centeredLeft = (scaledWidth - scaledWidth) / 2;
+		const centeredTop = (scaledHeight - scaledHeight) / 2;
+
+		// Reset the transform origin and apply the calculated scale and position to the childContainer
+		this.childContainer.style.transformOrigin = '0 0';
+		this.childContainer.style.transform = `scale(${scale})`;
+		this.childContainer.style.left = `${centeredLeft}px`;
+		this.childContainer.style.top = `${centeredTop}px`;
 	}
 	
 	copyToClipspace() {
@@ -1323,98 +1380,97 @@ class ComfyShopDialog extends ComfyDialog {
 		// Hide the context menu before any drawing operation
 		this.contextMenu.style.display = 'none';
 		
-		// Check for Alt + right mouse button click to show/hide context menu on mouse down
-		if ((event.altKey || event.shiftKey) && event.button === 2 && event.type === 'mousedown') {
+		// Check for Alt + right mouse button click to show/hide context menu
+		if ((event.altKey || event.shiftKey) && event.button === 2) {
 			event.preventDefault();
 			event.stopPropagation();
-		
-			const mouseX = event.clientX;
-			const mouseY = event.clientY;
-		
+			
 			// Toggle the context menu visibility
 			if (this.contextMenu.style.display === 'block') {
-				// Hide the context menu
 				this.contextMenu.style.display = 'none';
 			} else {
-				// Show the context menu
+				const mouseX = event.clientX;
+				const mouseY = event.clientY;
 				this.contextMenu.style.left = mouseX + 'px';
 				this.contextMenu.style.top = mouseY + 'px';
 				this.contextMenu.style.display = 'block';
-		
+				
 				this.createContextMenu();
 			}
-		
-			// Prevent drawing when context menu is displayed
 			skipDrawing = true;
 		}
-		
 		if (!skipDrawing) {
 			if (this.isCtrlDown && this.isSpaceDown && event.buttons === 1) {
 				this.isDragging = true;
-		
+			
 				this.initialMouseX = event.clientX;
 				this.initialMouseY = event.clientY;
-		
+			
 				this.initialOffsetX = this.childContainer.offsetLeft;
 				this.initialOffsetY = this.childContainer.offsetTop;
-		
+			
+				// Store the initial dragging offsets
+				this.dragStartX = this.dragOffsetX;
+				this.dragStartY = this.dragOffsetY;
+			
 				// Set drawing_mode to false when Ctrl+Spacebar are pressed and dragging
 				this.drawing_mode = false;
-		
+			
 				return;  // prevent drawing when Ctrl+Spacebar are pressed and dragging
 			}
-		
-			const drawingContext = this.isGreyscale === 'rgb'
-				? this.imgCanvas.getContext('2d', { willReadFrequently: true })
-				: this.maskCanvas.getContext('2d', { willReadFrequently: true });
-		
-			// Always capture the current state of the canvas for undo functionality.
-			this.previousImageData = drawingContext.getImageData(0, 0, (this.isGreyscale === 'rgb' ? this.imgCanvas : this.maskCanvas).width, (this.isGreyscale === 'rgb' ? this.imgCanvas : this.maskCanvas).height);
-		
-			const { x, y } = getActualCoordinates(event, this.isGreyscale === 'rgb' ? this.imgCanvas : this.maskCanvas, self.zoomLevel);
-		
-			var brush_size = this.brush_size / self.zoomLevel;
-			if (event instanceof PointerEvent && event.pointerType == 'pen') {
-				brush_size *= event.pressure;
-				this.last_pressure = event.pressure;
-			} else if (window.TouchEvent && event instanceof TouchEvent) {
-				brush_size *= this.last_pressure;
-			}
-		
-			const ColorContext = this.isGreyscale === 'rgb' ? self.brushColor : '#000000';
-			const brushColorRgb = this.hexToRgb(ColorContext);
-			const currentBrushOpacity = this.brushOpacity; 
-		
-			const softFactor = Math.max(0.1, 1 - self.brush_softness);
-			const innerRadius = brush_size * softFactor;
-			const outerRadius = brush_size;
-		
-			const gradient = drawingContext.createRadialGradient(x, y, innerRadius, x, y, outerRadius);
-			gradient.addColorStop(0, `rgba(${brushColorRgb.r}, ${brushColorRgb.g}, ${brushColorRgb.b}, ${currentBrushOpacity})`);
-			gradient.addColorStop(1, `rgba(${brushColorRgb.r}, ${brushColorRgb.g}, ${brushColorRgb.b}, ${currentBrushOpacity * softFactor})`);
-		
-			drawingContext.beginPath();
-			drawingContext.arc(x, y, brush_size, 0, 2 * Math.PI);
-			drawingContext.fillStyle = gradient;
-			drawingContext.fill();
-		
-			self.lastx = x;
-			self.lasty = y;
-		
-			this.drawing_mode = true;
-			this.brushVisible = true;
-		
-			this.draw_move(this, event);
-
-			this.currentAction = {
-				actionType: 'drawDot',
-				points: [ { x, y } ],
-				color: gradient,
-				brushSize: brush_size,
-				canvasType: this.isGreyscale === 'rgb' ? 'imgCanvas' : 'maskCanvas',
-				previousImageData: this.previousImageData
-			};
 		}
+		
+		const drawingContext = this.isGreyscale === 'rgb'
+			? this.imgCanvas.getContext('2d', { willReadFrequently: true })
+			: this.maskCanvas.getContext('2d', { willReadFrequently: true });
+	
+		// Always capture the current state of the canvas for undo functionality.
+		this.previousImageData = drawingContext.getImageData(0, 0, (this.isGreyscale === 'rgb' ? this.imgCanvas : this.maskCanvas).width, (this.isGreyscale === 'rgb' ? this.imgCanvas : this.maskCanvas).height);
+	
+		const { x, y } = getActualCoordinates(event, this.isGreyscale === 'rgb' ? this.imgCanvas : this.maskCanvas, self.zoomLevel);
+	
+		var brush_size = this.brush_size / self.zoomLevel;
+		if (event instanceof PointerEvent && event.pointerType == 'pen') {
+			brush_size *= event.pressure;
+			this.last_pressure = event.pressure;
+		} else if (window.TouchEvent && event instanceof TouchEvent) {
+			brush_size *= this.last_pressure;
+		}
+	
+		const ColorContext = this.isGreyscale === 'rgb' ? self.brushColor : '#000000';
+		const brushColorRgb = this.hexToRgb(ColorContext);
+		const currentBrushOpacity = this.brushOpacity; 
+	
+		const softFactor = Math.max(0.1, 1 - self.brush_softness);
+		const innerRadius = brush_size * softFactor;
+		const outerRadius = brush_size;
+	
+		const gradient = drawingContext.createRadialGradient(x, y, innerRadius, x, y, outerRadius);
+		gradient.addColorStop(0, `rgba(${brushColorRgb.r}, ${brushColorRgb.g}, ${brushColorRgb.b}, ${currentBrushOpacity})`);
+		gradient.addColorStop(1, `rgba(${brushColorRgb.r}, ${brushColorRgb.g}, ${brushColorRgb.b}, ${currentBrushOpacity * softFactor})`);
+	
+		drawingContext.beginPath();
+		drawingContext.arc(x, y, brush_size, 0, 2 * Math.PI);
+		drawingContext.fillStyle = gradient;
+		drawingContext.fill();
+	
+		self.lastx = x;
+		self.lasty = y;
+	
+		this.drawing_mode = true;
+		this.brushVisible = true;
+	
+		this.draw_move(this, event);
+
+		this.currentAction = {
+			actionType: 'drawDot',
+			points: [ { x, y } ],
+			color: gradient,
+			brushSize: brush_size,
+			canvasType: this.isGreyscale === 'rgb' ? 'imgCanvas' : 'maskCanvas',
+			previousImageData: this.previousImageData
+			
+		};
 	}
 
 	async saveRGBImage() {
@@ -1640,8 +1696,6 @@ class ComfyShopDialog extends ComfyDialog {
 
 		worker.onerror = (error) => {
 			console.error('Error in worker:', error);
-			// Handle the error appropriately here
-			// Possibly include cleanup code and UI updates to indicate the error to the user
 		};
 	}
 }
