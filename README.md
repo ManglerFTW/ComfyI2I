@@ -7,7 +7,7 @@
 ## ComfyShop Small Bugfix and Reframe Update - 9/30/2023 
   - Fixed a bug that was causing a loss of image quality when saved.
   - Large Images should handle better as you now have 2 framing options. 'f' hotkey will frame to full scale and shift + f will now fit to screen.
-  - You can now close the brush menu with right click.
+  - You can now close the brush menu with right click in addition to closing it by drawing on the canvas.
 
 ## ComfyShop Update - 9/25/2023
 
