@@ -1384,6 +1384,8 @@ class ComfyShopDialog extends ComfyDialog {
 		if ((event.altKey || event.shiftKey) && event.button === 2) {
 			event.preventDefault();
 			event.stopPropagation();
+
+			skipDrawing = true;
 			
 			// Toggle the context menu visibility
 			if (this.contextMenu.style.display === 'block') {
@@ -1397,7 +1399,7 @@ class ComfyShopDialog extends ComfyDialog {
 				
 				this.createContextMenu();
 			}
-			skipDrawing = true;
+			
 		}
 		if (!skipDrawing) {
 			if (this.isCtrlDown && this.isSpaceDown && event.buttons === 1) {
