@@ -4,7 +4,7 @@
   
   If you find these nodes useful please consider contributing to it's further development. All donations are much appreciated. [Buy me a coffee](https://bmc.link/ManglerFTW)
 
-## ComfyShop Small bugfix and reframe Update - 9/30/2023 
+## ComfyShop Small Bugfix and Reframe Update - 9/30/2023 
   - Fixed a bug that was causing a loss of image quality when saved.
   - Large Images should handle better as you now have 2 framing options. 'f' hotkey will frame to full scale and shift + f will now fit to screen.
   - You can now close the brush menu with right click.
