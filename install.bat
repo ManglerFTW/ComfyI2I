@@ -1,7 +1,7 @@
 @echo off
 
 set "requirements_txt=%~dp0\requirements.txt"
-set "python_exec=..\..\..\python_embedded\python.exe"
+set "python_exec=......\python_embeded\python.exe"
 
 echo Installing ComfyI2I ...
 
