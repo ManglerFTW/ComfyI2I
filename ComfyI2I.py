@@ -1235,7 +1235,16 @@ class Color_Correction:
 
     RETURN_TYPES = ("IMAGE", )
     RETURN_NAMES = ("image", )
-    FUNCTION = "ColorXfer2"
+    FUNCTION = "ColorXfer2batch"
+
+    def ColorXfer2batch(cls, source_image, target_image, no_of_colors, blur_radius, blur_amount, strength, gamma,
+                        contrast,
+                        brightness, mask=None):
+        xfer = lambda s, t: cls.ColorXfer2(s, t, no_of_colors, blur_radius, blur_amount, strength, gamma, contrast, brightness, mask)
+        type_checker = lambda img: img.unsqueeze(0) if torch.is_tensor(img) else img
+
+        result = [xfer(type_checker(s), type_checker(t))[0] for s, t in zip(source_image, target_image)]
+        return (torch.cat(result, dim=0),)
 
     def ColorXfer2(cls, source_image, target_image, no_of_colors, blur_radius, blur_amount, strength, gamma, contrast, brightness, mask=None):   
         if mask is not None:
