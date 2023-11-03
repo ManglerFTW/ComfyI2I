@@ -362,13 +362,14 @@ def segment_image(image_torch, palette_colors, mask_torch=None, threshold=128):
     """
     Segment the image based on the color similarity of each color in the palette using PyTorch.
     """
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if mask_torch is None:
-        mask_torch = torch.ones(image_torch.shape[:2], device='cuda') * 255
+        mask_torch = torch.ones(image_torch.shape[:2], device=device) * 255
 
     output_image_torch = torch.zeros_like(image_torch)
 
     # Convert palette colors to PyTorch tensor
-    palette_torch = torch.tensor([list(color.rgb) for color in palette_colors], device='cuda').float()
+    palette_torch = torch.tensor([list(color.rgb) for color in palette_colors], device=device).float()
 
     distances = torch.norm(image_torch.unsqueeze(-2) - palette_torch, dim=-1)
     closest_color_indices = torch.argmin(distances, dim=-1)
@@ -388,9 +389,10 @@ def calculate_luminance_vectorized(colors):
     return 0.299 * R + 0.587 * G + 0.114 * B
 
 def luminance_match(palette1, palette2):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     # Convert palettes to PyTorch tensors
-    palette1_rgb = torch.tensor([color.rgb for color in palette1], device='cuda').float()
-    palette2_rgb = torch.tensor([color.rgb for color in palette2], device='cuda').float()
+    palette1_rgb = torch.tensor([color.rgb for color in palette1], device=device).float()
+    palette2_rgb = torch.tensor([color.rgb for color in palette2], device=device).float()
 
     luminance1 = calculate_luminance_vectorized(palette1_rgb)
     luminance2 = calculate_luminance_vectorized(palette2_rgb)
